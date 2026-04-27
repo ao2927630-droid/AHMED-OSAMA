@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة الحروف الذكية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #FFF0F5; min-height: 100vh; width: 100vw; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* تصميم الأزرار 3D */
+        .btn-hover { transition: all 0.2s; cursor: pointer; }
+        .btn-hover:active { transform: translateY(2px); border-bottom-width: 2px !important; }
+        
+        @keyframes subtleShake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .btn-3d-shake { animation: subtleShake 0.5s infinite; }
+        .btn-3d-shake:hover { animation: none; transform: scale(1.05); }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* حوض السمك واليخت */
+        .aquarium {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 45%;
+            background: linear-gradient(to top, #4fa4cc 0%, rgba(135, 206, 235, 0.4) 80%, transparent 100%);
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .yacht {
+            position: absolute;
+            top: 5px;
+            font-size: 3.5rem;
+            animation: boatFloat 5s ease-in-out infinite;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .yacht-name {
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: #1e3a8a;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: -15px;
+            border: 1px solid #1e3a8a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        @keyframes boatFloat {
+            0%, 100% { transform: translate(10vw, 0) rotate(2deg); }
+            50% { transform: translate(65vw, 0) rotate(-2deg); }
+        }
+
+        .seaweed {
+            position: absolute;
+            bottom: -5px;
+            opacity: 0.9;
+            transform-origin: bottom;
+            animation: sway 2.5s ease-in-out infinite;
+        }
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg) scaleY(1); }
+            50% { transform: rotate(5deg) scaleY(1.1); }
+        }
+
+        .fish {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 1.2s ease-in-out;
+        }
+
+        .fish-letter {
+            position: absolute;
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: white;
+            background: #ec4899;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: -6px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        @keyframes bubbleUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) scale(1.3); opacity: 0; }
+        }
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: bubbleUp linear infinite;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (min-width: 768px) { .container-custom { max-width: 600px; margin: 0 auto; } }
+    </style>
+</head>
+<body class="bg-[#FFF0F5]">
+    <div id="app" class="w-full h-full flex-grow flex flex-col overflow-hidden"></div>
+
+    <script>
+        const letters = [
+            { letter: 'A', word: 'Apple', emoji: '🍎', arabic: 'تفاحة' }, { letter: 'B', word: 'Ball', emoji: '⚽', arabic: 'كرة' },
+            { letter: 'C', word: 'Cat', emoji: '🐱', arabic: 'قطة' }, { letter: 'D', word: 'Dog', emoji: '🐶', arabic: 'كلب' },
+            { letter: 'E', word: 'Elephant', emoji: '🐘', arabic: 'فيل' }, { letter: 'F', word: 'Fish', emoji: '🐟', arabic: 'سمكة' },
+            { letter: 'G', word: 'Grapes', emoji: '🍇', arabic: 'عنب' }, { letter: 'H', word: 'House', emoji: '🏠', arabic: 'منزل' },
+            { letter: 'I', word: 'Ice Cream', emoji: '🍦', arabic: 'آيس كريم' }, { letter: 'J', word: 'Juice', emoji: '🧃', arabic: 'عصير' },
+            { letter: 'K', word: 'Kite', emoji: '🪁', arabic: 'طائرة ورقية' }, { letter: 'L', word: 'Lion', emoji: '🦁', arabic: 'أسد' },
+            { letter: 'M', word: 'Moon', emoji: '🌙', arabic: 'قمر' }, { letter: 'N', word: 'Nose', emoji: '👃', arabic: 'أنف' },
+            { letter: 'O', word: 'Orange', emoji: '🍊', arabic: 'برتقالة' }, { letter: 'P', word: 'Penguin', emoji: '🐧', arabic: 'بطريق' },
+            { letter: 'Q', word: 'Queen', emoji: '👸', arabic: 'ملكة' }, { letter: 'R', word: 'Rainbow', emoji: '🌈', arabic: 'قوس قزح' },
+            { letter: 'S', word: 'Sun', emoji: '☀️', arabic: 'شمس' }, { letter: 'T', word: 'Tree', emoji: '🌳', arabic: 'شجرة' },
+            { letter: 'U', word: 'Umbrella', emoji: '☂️', arabic: 'مظلة' }, { letter: 'V', word: 'Violin', emoji: '🎻', arabic: 'كمان' },
+            { letter: 'W', word: 'Watermelon', emoji: '🍉', arabic: 'بطيخ' }, { letter: 'X', word: 'Xylophone', emoji: '🎵', arabic: 'إكسيليفون' },
+            { letter: 'Y', word: 'Yacht', emoji: '⛵', arabic: 'يخت' }, { letter: 'Z', word: 'Zebra', emoji: '🦓', arabic: 'حمار وحشي' }
+        ];
+
+        const fishEmojis = ['🐠', '🐟', '🐡', '🐬', '🦐', '🦑', '🐙', '🦀'];
+        const sounds = {
+            correct: new Audio('https://www.myinstants.com/media/sounds/correct-answer.mp3'),
+            wrong: new Audio('https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3')
+        };
+
+        let state = { view: 'welcome', lives: 3, score: 0, questionIdx: 0, quizData: null, feedback: null, activeReviewCard: null };
+        let currentIndex = 0;
+
+        function playSfx(type) {
+            sounds[type].currentTime = 0;
+            sounds[type].play().catch(() => console.log("Sound played"));
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US';
+            window.speechSynthesis.speak(msg);
+        }
+
+        function initAquarium() {
+            const aquarium = document.querySelector('.aquarium');
+            if(!aquarium) return;
+
+            // النباتات البحرية (25 نبتة)
+            for(let i=0; i<25; i++) {
+                const seaweed = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                seaweed.setAttribute("class", "seaweed");
+                seaweed.setAttribute("viewBox", "0 0 20 100");
+                seaweed.style.width = Math.random() * 40 + 20 + "px";
+                seaweed.style.height = Math.random() * 110 + 70 + "px";
+                seaweed.style.left = Math.random() * 100 + "%";
+                seaweed.style.animationDelay = Math.random() * 2 + "s";
+                const color = ["#2D5A27", "#1e4d2b", "#3d8c40"][Math.floor(Math.random()*3)];
+                seaweed.innerHTML = `<path d="M10,100 Q${Math.random()*20},75 10,50 T10,0" stroke="${color}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+                aquarium.appendChild(seaweed);
+            }
+
+            // الفقاعات
+            for(let i=0; i<30; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = Math.random() * 20 + 5 + 'px';
+                bubble.style.width = size; bubble.style.height = size;
+                bubble.style.left = Math.random() * 100 + '%';
+                bubble.style.bottom = "-30px";
+                bubble.style.animationDuration = Math.random() * 6 + 5 + 's';
+                bubble.style.animationDelay = Math.random() * 8 + 's';
+                aquarium.appendChild(bubble);
+            }
+
+            // الأسماك (30 سمكة)
+            for(let i=0; i<30; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'fish';
+                const randomLetter = letters[Math.floor(Math.random() * letters.length)].letter;
+                const randomEmoji = fishEmojis[Math.floor(Math.random() * fishEmojis.length)];
+                
+                fish.style.fontSize = Math.random() * 2 + 2 + "rem";
+                fish.innerHTML = `${randomEmoji} <span class="fish-letter">${randomLetter}</span>`;
+                
+                let posX = Math.random() * 95;
+                let posY = Math.random() * 85;
+                let speedX = (Math.random() * 0.1 + 0.05) * (Math.random() > 0.5 ? 1 : -1);
+                
+                fish.style.left = posX + '%';
+                fish.style.top = posY + '%';
+                if(speedX > 0) fish.style.transform = 'scaleX(-1)';
+                
+                aquarium.appendChild(fish);
+
+                function animate() {
+                    posX += speedX;
+                    if(posX > 98 || posX < -8) {
+                        speedX *= -1;
+                        fish.style.transform = speedX > 0 ? 'scaleX(-1)' : 'scaleX(1)';
+                    }
+                    fish.style.left = posX + '%';
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+        }
+
+        function startQuiz() {
+            state.questionIdx = 0; state.score = 0; state.lives = 3; 
+            generateQuiz(); state.view = 'quiz'; render();
+        }
+
+        function generateQuiz() {
+            const correct = letters[Math.floor(Math.random() * letters.length)];
+            const type = Math.random() > 0.5 ? 'choice' : 'match';
+            let options = [correct];
+            while(options.length < 4) {
+                let rand = letters[Math.floor(Math.random() * letters.length)];
+                if(!options.find(o => o.letter === rand.letter)) options.push(rand);
+            }
+            options.sort(() => Math.random() - 0.5);
+            state.quizData = { type, correct, options };
+            state.questionIdx++;
+            state.feedback = null;
+        }
+
+        function handleAnswer(isCorrect) {
+            if(state.feedback) return;
+            
+            if(isCorrect) {
+                playSfx('correct');
+                state.feedback = 'correct'; state.score += 10; render(); 
+                setTimeout(() => {
+                    if(state.questionIdx >= 10) { state.view = 'result'; }
+                    else { generateQuiz(); }
+                    render();
+                }, 1500);
+            } else {
+                playSfx('wrong');
+                state.feedback = 'wrong'; state.lives--; render();
+                setTimeout(() => {
+                    if(state.lives <= 0) { state.view = 'cooldown'; state.cooldown = 30; startCooldownTimer(); }
+                    else { state.feedback = null; generateQuiz(); render(); }
+                }, 1500);
+            }
+        }
+
+        function startCooldownTimer() {
+            const timer = setInterval(() => {
+                state.cooldown--;
+                if(state.cooldown <= 0) { clearInterval(timer); state.lives = 3; state.view = 'home'; render(); }
+                else render();
+            }, 1000);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.view === 'welcome') {
+                app.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center p-4 fade-in bg-white relative overflow-hidden">
+                    <div class="text-center w-full max-w-sm z-30 mb-28">
+                        <h1 class="text-2xl font-black text-pink-600 mb-1">وسيلة تعليمية رقمية</h1>
+                        <p class="text-sm text-gray-600 font-bold mb-6">مخصصة لتعليم الحروف والكلمات الإنجليزية للأطفال</p>
+                        <div class="mb-4">
+                            <h2 class="text-pink-500 font-bold text-lg underline underline-offset-4">تحت إشراف:</h2>
+                            <p class="text-2xl font-black text-gray-800 mt-1">د. يسرا محمد</p>
+                        </div>
+                        <div class="bg-pink-50 p-5 rounded-[30px] text-right mb-6 border border-pink-100 shadow-sm">
+                            <h2 class="text-pink-600 font-bold mb-3 border-b border-pink-200 pb-1 italic">إعداد الطالب:</h2>
+                            <p class="text-gray-700 font-bold text-sm leading-relaxed">• أحمد أسامه سعد زغلول</p>
+                        </div>
+                        <button onclick="state.view='home'; render();" 
+                            class="btn-hover btn-3d-shake w-full py-5 bg-pink-500 text-white rounded-2xl font-black text-2xl shadow-xl border-b-8 border-pink-700">
+                            دخول التطبيق 🚀
+                        </button>
+                    </div>
+                    <div class="aquarium">
+                        <div class="yacht">🚢 <span class="yacht-name">ADVENTURE</span></div>
+                    </div>
+                </div>`;
+                initAquarium();
+            }
+
+            else if (state.view === 'home') {
+                app.innerHTML = `
+                <div class="p-3 flex flex-col h-full fade-in container-custom overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <button onclick="state.view='welcome'; render();" 
+                            class="btn-hover btn-3d-shake bg-white px-3 py-1 rounded-xl shadow-md border-b-4 border-gray-200 text-xl">🏠</button>
+                        <div class="flex gap-1 text-lg">${'❤️'.repeat(state.lives)}</div>
+                        <button onclick="state.view='review'; render();" 
+                            class="btn-hover btn-3d-shake bg-orange-400 text-white px-3 py-1 rounded-xl font-bold shadow-md border-b-4 border-orange-600 text-xs">المراجعة 📝</button>
+                    </div>
+                    <div class="bg-pink-100/60 p-2 rounded-xl mb-3 border border-pink-200 text-center font-bold text-pink-700 text-[11px]">اضغط على بطاقة الحرف للتعرف على الحرف وسماعه</div>
+                    <div class="grid grid-cols-5 gap-2 overflow-y-auto no-scrollbar flex-grow pb-24">
+                        ${letters.map((item, idx) => `
+                            <div onclick="state.view='letter'; currentIndex=${idx}; render(); speak('${item.letter}');" 
+                                class="btn-hover bg-white p-2 rounded-xl shadow-sm border-b-2 border-pink-100 text-center h-fit">
+                                <div class="text-lg font-black text-pink-500">${item.letter}</div>
+                                <div class="text-xl">${item.emoji}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="fixed bottom-4 left-4 right-4 flex justify-center">
+                        <button onclick="startQuiz();" 
+                            class="btn-hover btn-3d-shake w-full max-w-md py-4 bg-green-500 text-white rounded-2xl font-black text-lg shadow-xl border-b-8 border-green-700">بدء الاختبار التفاعلي 🎯</button>
+                    </div>
+                </div>`;
+            }
+
+            else if (state.view === 'review') {
+                const chunks = [];
+                for (let i = 0; i < letters.length; i += 5) chunks.push(letters.slice(i, i + 5));
+                app.innerHTML = `
+                <div class="p-4 flex flex-col h-full fade-in container-custom overflow-hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="state.view='home'; render();" 
+                            class="btn-hover btn-3d-shake bg-white px-3 py-1 rounded-xl shadow-md border-b-4 border-pink-200 font-bold text-pink-500 text-xs">🔙 القائمة الرئيسية</button>
+                        <h2 class="text-lg font-black text-pink-600">المراجعة الشاملة 📝</h2>
+                    </div>
+                    <div class="flex-grow overflow-y-auto no-scrollbar space-y-3 pb-24">
+                        ${chunks.map((chunk, i) => `
+                            <div onclick="state.activeReviewCard = (state.activeReviewCard === ${i} ? null : ${i}); render();" class="bg-white p-3 rounded-2xl shadow-sm border-r-8 border-pink-400 cursor-pointer">
+                                <div class="flex justify-between items-center"><span class="font-bold text-gray-700 text-sm">مجموعة الحروف ${i+1}</span><span>${state.activeReviewCard === i ? '🔼' : '🔽'}</span></div>
+                                ${state.activeReviewCard === i ? `<div class="mt-3 space-y-2 fade-in">${chunk.map(item => `
+                                    <div class="flex items-center gap-3 bg-pink-50 p-2 rounded-xl">
+                                        <span class="text-lg font-black text-pink-500 w-8">${item.letter}</span><span class="text-xl">${item.emoji}</span>
+                                        <div class="flex-grow text-left"><div class="font-bold text-[10px] uppercase">${item.word}</div><div class="text-orange-500 text-[9px]">${item.arabic}</div></div>
+                                    </div>`).join('')}</div>` : ''}
+                            </div>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            else if (state.view === 'letter') {
+                const item = letters[currentIndex];
+                app.innerHTML = `
+                <div class="p-4 h-full flex flex-col fade-in container-custom">
+                    <div class="flex gap-2">
+                        <button onclick="state.view='home'; render();" class="btn-hover btn-3d-shake flex-1 bg-white py-2 rounded-xl border-b-4 border-pink-200 font-bold text-pink-500 text-[10px]">🔙 القائمة الرئيسية</button>
+                        <button onclick="startQuiz();" class="btn-hover btn-3d-shake flex-1 bg-green-500 py-2 rounded-xl border-b-4 border-green-700 font-bold text-white text-[10px]">🎯 بدء الاختبار</button>
+                    </div>
+                    <div class="mt-4 bg-orange-50 p-2 rounded-xl border border-orange-100 text-center font-bold text-orange-700 text-sm">اضغط على البطاقة لسماع النطق 🔊</div>
+                    <div class="flex-grow flex flex-col items-center justify-center">
+                        <div onclick="speak('${item.word}')" class="btn-hover bg-white w-full max-w-xs rounded-[40px] shadow-lg flex flex-col items-center justify-center p-8 border-b-8 border-pink-100 mb-8">
+                            <div class="text-8xl mb-2">${item.emoji}</div>
+                            <div class="text-8xl font-black text-pink-500 leading-none">${item.letter}</div>
+                            <div class="text-3xl font-black text-gray-800 uppercase mt-2">${item.word}</div>
+                            <div class="text-xl text-orange-400 font-bold">${item.arabic}</div>
+                        </div>
+                        <div class="flex gap-4 w-full max-w-xs px-2">
+                            <button onclick="currentIndex > 0 && (currentIndex--, render(), speak(letters[currentIndex].letter))" class="btn-hover btn-3d-shake flex-1 py-4 bg-white text-pink-500 rounded-2xl font-black shadow-md border-b-4 border-gray-100">⬅️ السابق</button>
+                            <button onclick="currentIndex < letters.length-1 && (currentIndex++, render(), speak(letters[currentIndex].letter))" class="btn-hover btn-3d-shake flex-1 py-4 bg-pink-500 text-white rounded-2xl font-black shadow-md border-b-4 border-pink-700">التالي ➡️</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            else if (state.view === 'quiz') {
+                const progress = (state.questionIdx / 10) * 100;
+                app.innerHTML = `
+                <div class="p-4 h-full flex flex-col fade-in relative container-custom">
+                    ${state.feedback === 'correct' ? `<div class="fixed inset-0 flex flex-col items-center justify-center z-[9999] bg-green-500/90 text-white fade-in"><span class="text-9xl mb-4">✅</span><span class="text-4xl font-black italic">عاش يابطل!</span></div>` : ''}
+                    ${state.feedback === 'wrong' ? `<div class="fixed inset-0 flex flex-col items-center justify-center z-[9999] bg-red-500/90 text-white fade-in"><span class="text-9xl mb-4">❌</span><span class="text-4xl font-black italic">حاول مرة أخرى!</span></div>` : ''}
+                    <div class="flex justify-between items-center mb-2">
+                        <button onclick="if(confirm('هل تريد الانسحاب؟')){state.view='home'; render();}" 
+                            class="btn-hover btn-3d-shake bg-white px-3 py-1 rounded-lg shadow-md border-b-4 border-gray-200 font-bold text-pink-500 text-[10px]">🔙 انسحاب</button>
+                        <div class="text-pink-600 font-black text-sm">سؤال ${state.questionIdx}/10</div>
+                        <div class="flex gap-1">${'❤️'.repeat(state.lives)}</div>
+                    </div>
+                    <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-4"><div class="bg-green-500 h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                    <div class="bg-white flex-grow rounded-[30px] shadow-lg p-6 flex flex-col items-center justify-center">
+                        ${state.quizData.type === 'choice' ? `
+                            <div class="text-8xl mb-8">${state.quizData.correct.emoji}</div>
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                ${state.quizData.options.map(opt => `<button onclick="handleAnswer('${opt.letter}' === '${state.quizData.correct.letter}')" class="btn-hover py-4 bg-pink-50 text-pink-600 rounded-2xl text-3xl font-black border-b-4 border-pink-200 shadow-sm">${opt.letter}</button>`).join('')}
+                            </div>` : `
+                            <div class="bg-pink-50 px-6 py-3 rounded-2xl mb-8 border-2 border-pink-100 font-black text-3xl text-pink-500 uppercase">${state.quizData.correct.word}</div>
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                ${state.quizData.options.map(opt => `<button onclick="handleAnswer('${opt.letter}' === '${state.quizData.correct.letter}')" class="btn-hover p-4 bg-white rounded-2xl shadow-md border-b-4 border-pink-100 text-5xl">${opt.emoji}</button>`).join('')}
+                            </div>`}
+                    </div>
+                </div>`;
+            }
+
+            else if (state.view === 'result') {
+                app.innerHTML = `<div class="h-full flex items-center justify-center p-6 text-center fade-in bg-white"><div class="w-full max-w-sm"><div class="text-8xl mb-4">🏆</div><h1 class="text-2xl font-black text-gray-800">أنت ذكي جداً!</h1><div class="text-4xl font-black text-pink-500 my-6">نقاطك: ${state.score}</div><button onclick="state.view='home'; state.lives=3; render();" class="btn-hover btn-3d-shake w-full py-4 bg-green-500 text-white rounded-2xl font-black text-xl shadow-lg border-b-8 border-green-700">العب مرة ثانية 🔄</button></div></div>`;
+            }
+
+            else if (state.view === 'cooldown') {
+                app.innerHTML = `<div class="h-full flex items-center justify-center p-6 text-center fade-in bg-white"><div><div class="text-7xl mb-4">💔</div><h1 class="text-xl font-black">انتهت المحاولات!</h1><div class="text-6xl font-black text-red-500 my-4">${state.cooldown}</div></div></div>`;
+            }
+        }
+
+        render();
+    </script>
+</body>
+</html>
