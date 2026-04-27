@@ -389,12 +389,15 @@
                         <div class="flex gap-1">${'❤️'.repeat(state.lives)}</div>
                     </div>
                     <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-4"><div class="bg-green-500 h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                    
                     <div class="bg-white flex-grow rounded-[30px] shadow-lg p-6 flex flex-col items-center justify-center">
                         ${state.quizData.type === 'choice' ? `
+                            <h2 class="text-xl font-bold text-gray-700 mb-6 text-center">اختر الحرف الصحيح للرمز التالي:</h2>
                             <div class="text-8xl mb-8">${state.quizData.correct.emoji}</div>
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 ${state.quizData.options.map(opt => `<button onclick="handleAnswer('${opt.letter}' === '${state.quizData.correct.letter}')" class="btn-hover py-4 bg-pink-50 text-pink-600 rounded-2xl text-3xl font-black border-b-4 border-pink-200 shadow-sm">${opt.letter}</button>`).join('')}
                             </div>` : `
+                            <h2 class="text-xl font-bold text-gray-700 mb-6 text-center">اختر الرمز المناسب للكلمة التالية:</h2>
                             <div class="bg-pink-50 px-6 py-3 rounded-2xl mb-8 border-2 border-pink-100 font-black text-3xl text-pink-500 uppercase">${state.quizData.correct.word}</div>
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 ${state.quizData.options.map(opt => `<button onclick="handleAnswer('${opt.letter}' === '${state.quizData.correct.letter}')" class="btn-hover p-4 bg-white rounded-2xl shadow-md border-b-4 border-pink-100 text-5xl">${opt.emoji}</button>`).join('')}
